@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>MindAR Image Tracking (Fixed Overlay)</title>
+    <title>MindAR Multi-Target AR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -23,31 +23,59 @@
     </style>
   </head>
   <body>
-    <div id="hud">Taperinkkkkk to Start AR Experience and Grant Camera Access</div>
+    <div id="hud">Tap to Start AR Experience and Grant Camera Access</div>
 
     <a-scene mindar-image="
-               imageTargetSrc: targets (2).mind; 
-               filterMinCF: 0.0005; 
-               filterBeta: 2000;"
+               imageTargetSrc: targets (3).mind;  /* Your multi-target file */
+               filterMinCF: 0.001; 
+               filterBeta: 5000;"
              color-space="sRGB" 
              renderer="colorManagement: true, physicallyCorrectLights: true" 
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false">
 
       <a-assets>
-        <img id="overlayAsset" src="Antra.jpg" crossorigin="anonymous"> 
+        <img id="overlayA" src="Pirma.jpg" crossorigin="anonymous">
+        <img id="overlayB" src="Antra.jpg" crossorigin="anonymous">
+        <img id="overlayC" src="Trecia.jpg" crossorigin="anonymous">
+        <img id="overlayD" src="Ketvirta.jpg" crossorigin="anonymous">
       </a-assets>
 
       <a-camera mindar-image-camera></a-camera>
 
+      <!-- Painting A -->
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-image src="#overlayAsset"
+        <a-image src="#overlayA"
                  width="1.2" height="0.9"
                  position="0 0 0.02"
-                 rotation="0 0 0"
                  material="side: double; depthTest: false;"
-                 render-order="999">
-        </a-image>
+                 render-order="999"></a-image>
+      </a-entity>
+
+      <!-- Painting B -->
+      <a-entity mindar-image-target="targetIndex: 1">
+        <a-image src="#overlayB"
+                 width="1.2" height="0.9"
+                 position="0 0 0.02"
+                 material="side: double; depthTest: false;"
+                 render-order="999"></a-image>
+      </a-entity>
+
+      <!-- Painting C -->
+      <a-entity mindar-image-target="targetIndex: 2">
+        <a-image src="#overlayC"
+                 width="1.2" height="0.9"
+                 position="0 0 0.02"
+                 material="side: double; depthTest: false;"
+                 render-order="999"></a-image>
+      </a-entity>
+         <!-- Painting D -->
+      <a-entity mindar-image-target="targetIndex: 3">
+        <a-image src="#overlayD"
+                 width="1.2" height="0.9"
+                 position="0 0 0.02"
+                 material="side: double; depthTest: false;"
+                 render-order="999"></a-image>
       </a-entity>
 
     </a-scene>
@@ -56,6 +84,7 @@
       const sceneEl = document.querySelector('a-scene');
       const hudEl = document.getElementById('hud');
 
+      // Tap to start AR camera
       hudEl.addEventListener('click', () => {
         if (sceneEl && sceneEl.components['mindar-image'] && !sceneEl.components['mindar-image'].data.autostart) {
           sceneEl.components['mindar-image'].start();
@@ -64,11 +93,12 @@
         setTimeout(() => hudEl.style.display = 'none', 500);
       }, { once: true });
 
-      const targetEl = document.querySelector('a-entity[mindar-image-target]');
-      if (targetEl) {
-          targetEl.addEventListener('targetLost', () => console.log('Target lost.'));
-          targetEl.addEventListener('targetFound', () => console.log('Target found.'));
-      }
+      // Optional: tracking feedback
+      const targets = document.querySelectorAll('a-entity[mindar-image-target]');
+      targets.forEach((target, i) => {
+        target.addEventListener('targetFound', () => console.log(`Target ${i} found.`));
+        target.addEventListener('targetLost', () => console.log(`Target ${i} lost.`));
+      });
     </script>
   </body>
 </html>
