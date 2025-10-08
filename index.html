@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>MindAR Image Tracking (Final Visibility Fix)</title>
+    <title>MindAR Image Tracking (Fixed Overlay)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -12,90 +12,62 @@
       body { margin: 0; overflow: hidden; }
       #hud {
         position: fixed; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: 100%; 
-        background-color: rgba(0, 0, 0, 0.5); 
-        color: white; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center;
-        text-align: center;
-        font-size: 20px;
-        cursor: pointer;
-        z-index: 1000;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        color: white; display: flex;
+        justify-content: center; align-items: center;
+        text-align: center; font-size: 20px;
+        cursor: pointer; z-index: 1000;
         transition: opacity 0.5s;
       }
     </style>
   </head>
   <body>
-    <div id="hud">
-      Tappp to Start AR Experience and Grant Camera Access
-    </div>
+    <div id="hud">Taperink to Start AR Experience and Grant Camera Access</div>
 
     <a-scene mindar-image="
                imageTargetSrc: targets (2).mind; 
                filterMinCF: 0.001; 
-               filterBeta: 5000; 
-             " 
+               filterBeta: 5000;"
              color-space="sRGB" 
              renderer="colorManagement: true, physicallyCorrectLights: true" 
              vr-mode-ui="enabled: false" 
-             device-orientation-permission-ui="enabled: false"
-             id="arScene"> 
+             device-orientation-permission-ui="enabled: false">
 
       <a-assets>
         <img id="overlayAsset" src="Antra.jpg" crossorigin="anonymous"> 
       </a-assets>
 
-      <a-camera mindar-image-camera=""></a-camera>
+      <a-camera mindar-image-camera></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0">
-    <a-image src="#overlayAsset"
-             width="1.2" height="0.9" 
-             position="0 0 0.05"
-             rotation="0 0 0"
-             material="side: double; depthTest: false;"
-             render-order="999"></a-image>
-</a-entity>
+        <a-image src="#overlayAsset"
+                 width="1.2" height="0.9"
+                 position="0 0 0.02"
+                 rotation="0 0 0"
+                 material="side: double; depthTest: false;"
+                 render-order="999">
+        </a-image>
+      </a-entity>
 
     </a-scene>
 
     <script>
-      const sceneEl = document.getElementById('arScene');
+      const sceneEl = document.querySelector('a-scene');
       const hudEl = document.getElementById('hud');
-      let mindarComponent = null;
 
-      sceneEl.addEventListener('loaded', () => {
-          mindarComponent = sceneEl.components['mindar-image'];
-          if (mindarComponent) {
-              mindarComponent.data.autostart = false; 
-              window.arScene = sceneEl; 
-          }
-      });
-      
-
-      // --- CRITICAL CAMERA RESTART FIX ---
       hudEl.addEventListener('click', () => {
-          if (mindarComponent) {
-              console.log("Attempting to start MindAR.");
-              mindarComponent.start();
-          } else {
-              console.error("MindAR component not yet initialized!");
-          }
-          
-          hudEl.style.opacity = 0; 
-          setTimeout(() => hudEl.style.display = 'none', 500);
-      }, { once: true }); 
+        if (sceneEl && sceneEl.components['mindar-image'] && !sceneEl.components['mindar-image'].data.autostart) {
+          sceneEl.components['mindar-image'].start();
+        }
+        hudEl.style.opacity = 0; 
+        setTimeout(() => hudEl.style.display = 'none', 500);
+      }, { once: true });
 
-      // --- Tracking Status Handlers ---
       const targetEl = document.querySelector('a-entity[mindar-image-target]');
-
       if (targetEl) {
-          targetEl.addEventListener('targetFound', () => {
-              console.log('Target found. Overlay should be visible now.');
-          });
+          targetEl.addEventListener('targetLost', () => console.log('Target lost.'));
+          targetEl.addEventListener('targetFound', () => console.log('Target found.'));
       }
     </script>
   </body>
