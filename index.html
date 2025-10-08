@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>MindAR Image Tracking</title>
+    <title>MindAR Image Tracking (Fixed)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -17,7 +17,7 @@
         left: 0; 
         width: 100%; 
         height: 100%; 
-        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+        background-color: rgba(0, 0, 0, 0.5); 
         color: white; 
         display: flex; 
         justify-content: center; 
@@ -32,10 +32,14 @@
   </head>
   <body>
     <div id="hud">
-      Tap to Start AR Experience and Grant Camera Access
+      #1 Tap to Start AR Experience and Grant Camera Access
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: targets (2).mind; filterMinCF:0.001; filterBeta: 10000;" 
+    <a-scene mindar-image="
+               imageTargetSrc: targets (2).mind; 
+               filterMinCF: 0.001; 
+               filterBeta: 5000; /* FIX: Lowered from 10000 to improve tracking smoothness and stability */
+             " 
              color-space="sRGB" 
              renderer="colorManagement: true, physicallyCorrectLights: true" 
              vr-mode-ui="enabled: false" 
@@ -50,8 +54,8 @@
       <a-entity mindar-image-target="targetIndex: 0">
         
         <a-image src="#overlayAsset"
-                 width="1.0" height="1.0"
-                 position="0 0 0.05"
+                 width="1.2" height="0.9" 
+                 position="0 0 0"      
                  rotation="0 0 0" 
                  material="side: double;"></a-image>
         
@@ -74,14 +78,16 @@
         setTimeout(() => hudEl.style.display = 'none', 500); // Remove after fade
       }, { once: true }); // Only listen for the first click
 
-      // --- Tracking Status Handlers ---
+      // --- Tracking Status Handlers (Optional for feedback) ---
       const targetEl = document.querySelector('a-entity[mindar-image-target]');
 
       if (targetEl) {
           targetEl.addEventListener('targetLost', () => {
-              // Optionally show the HUD again with a prompt if the target is lost
-              // hudEl.style.opacity = 1;
-              // hudEl.style.display = 'flex';
+              // You can add code here to show a message that the target was lost.
+              console.log('Target lost. Overlay disappeared.');
+          });
+          targetEl.addEventListener('targetFound', () => {
+              console.log('Target found. Overlay appearing.');
           });
       }
     </script>
