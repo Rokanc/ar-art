@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>MindAR Image Tracking (Fixed Camera Restart)</title>
+    <title>MindAR Image Tracking (Final Visibility Fix)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -31,7 +31,7 @@
   </head>
   <body>
     <div id="hud">
-     #5 Tap to Start AR Experience and Grant Camera Access
+      Tap to Start AR Experience and Grant Camera Access
     </div>
 
     <a-scene mindar-image="
@@ -43,7 +43,9 @@
              renderer="colorManagement: true, physicallyCorrectLights: true" 
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false"
-             id="arScene"> <a-assets>
+             id="arScene"> 
+
+      <a-assets>
         <img id="overlayAsset" src="Antra.jpg" crossorigin="anonymous"> 
       </a-assets>
 
@@ -53,10 +55,9 @@
         
         <a-image src="#overlayAsset"
                  width="1.2" height="0.9" 
-                 position="0 0 0.001"      rotation="0 0 0" 
-                 material="side: double;"></a-image>
-        
-      </a-entity>
+                 position="0 0 0.001"      /* CRITICAL: Set Z to a tiny positive value (1mm) to guarantee it's in front */
+                 rotation="0 0 0" 
+                 material="side: double;"></a-image> </a-entity>
     </a-scene>
 
     <script>
@@ -64,13 +65,10 @@
       const hudEl = document.getElementById('hud');
       let mindarComponent = null;
 
-      // Wait for the A-Frame component to load before getting a reference to MindAR
       sceneEl.addEventListener('loaded', () => {
           mindarComponent = sceneEl.components['mindar-image'];
-          // Ensure autostart is false so the user tap is required
           if (mindarComponent) {
               mindarComponent.data.autostart = false; 
-              // Set a manual reference to the scene for safety
               window.arScene = sceneEl; 
           }
       });
@@ -85,17 +83,16 @@
               console.error("MindAR component not yet initialized!");
           }
           
-          // Fade out the HUD immediately after the tap
           hudEl.style.opacity = 0; 
           setTimeout(() => hudEl.style.display = 'none', 500);
       }, { once: true }); 
 
       // --- Tracking Status Handlers ---
       const targetEl = document.querySelector('a-entity[mindar-image-target]');
+
       if (targetEl) {
-          targetEl.addEventListener('targetLost', () => {
-              console.log('Target lost.');
-              // You can optionally show the HUD again here to prompt for a restart
+          targetEl.addEventListener('targetFound', () => {
+              console.log('Target found. Overlay should be visible now.');
           });
       }
     </script>
