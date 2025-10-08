@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MindAR Image Tracking</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script> 
+    
+    <style>
+      body { margin: 0; overflow: hidden; }
+      /* Styles for the transparent overlay used for the initial "tap" to start the camera */
+      #hud {
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+        color: white; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center;
+        text-align: center;
+        font-size: 20px;
+        cursor: pointer;
+        z-index: 1000;
+        transition: opacity 0.5s;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud">
+      Tap to Start AR Experience and Grant Camera Access
+    </div>
+
+    <a-scene mindar-image="imageTargetSrc: targets (1).mind; filterMinCF:0.001; filterBeta: 10000;" 
+             color-space="sRGB" 
+             renderer="colorManagement: true, physicallyCorrectLights: true" 
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: false">
+
+      <a-assets>
+        <img id="overlayAsset" src="Pirma.jpg" crossorigin="anonymous"> 
+      </a-assets>
+
+      <a-camera mindar-image-camera=""></a-camera>
+
+      <a-entity mindar-image-target="targetIndex: 0">
+        
+        <a-image src="#overlayAsset"
+                 width="1.0" height="1.0"
+                 position="0 0 0.05"
+                 rotation="0 0 0" 
+                 material="side: double;"></a-image>
+        
+        </a-entity>
+    </a-scene>
+
+    <script>
+      const sceneEl = document.querySelector('a-scene');
+      const hudEl = document.getElementById('hud');
+
+      // --- CRITICAL CAMERA FIX ---
+      // Listen for a tap on the HUD overlay to manually trigger camera start.
+      hudEl.addEventListener('click', () => {
+        // Only attempt to start if the scene hasn't been initialized yet
+        if (sceneEl && sceneEl.components['mindar-image'] && !sceneEl.components['mindar-image'].data.autostart) {
+          sceneEl.components['mindar-image'].start();
+        }
+        // Fade out the HUD immediately after the tap
+        hudEl.style.opacity = 0; 
+        setTimeout(() => hudEl.style.display = 'none', 500); // Remove after fade
+      }, { once: true }); // Only listen for the first click
+
+      // --- Tracking Status Handlers ---
+      const targetEl = document.querySelector('a-entity[mindar-image-target]');
+
+      if (targetEl) {
+          targetEl.addEventListener('targetLost', () => {
+              // Optionally show the HUD again with a prompt if the target is lost
+              // hudEl.style.opacity = 1;
+              // hudEl.style.display = 'flex';
+          });
+      }
+    </script>
+  </body>
+</html>
