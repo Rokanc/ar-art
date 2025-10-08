@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>MindAR Image Tracking (Fixed Rendering)</title>
+    <title>MindAR Image Tracking (Fixed Camera Restart)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -10,7 +10,6 @@
     
     <style>
       body { margin: 0; overflow: hidden; }
-      /* Styles for the transparent overlay used for the initial "tap" to start the camera */
       #hud {
         position: fixed; 
         top: 0; 
@@ -32,20 +31,19 @@
   </head>
   <body>
     <div id="hud">
-      #2 Tap to Start AR Experience and Grant Camera Access
+     #5 Tap to Start AR Experience and Grant Camera Access
     </div>
 
     <a-scene mindar-image="
                imageTargetSrc: targets (2).mind; 
                filterMinCF: 0.001; 
-               filterBeta: 5000; /* Lowered for smoother tracking */
+               filterBeta: 5000; 
              " 
              color-space="sRGB" 
              renderer="colorManagement: true, physicallyCorrectLights: true" 
              vr-mode-ui="enabled: false" 
-             device-orientation-permission-ui="enabled: false">
-
-      <a-assets>
+             device-orientation-permission-ui="enabled: false"
+             id="arScene"> <a-assets>
         <img id="overlayAsset" src="Antra.jpg" crossorigin="anonymous"> 
       </a-assets>
 
@@ -55,36 +53,49 @@
         
         <a-image src="#overlayAsset"
                  width="1.2" height="0.9" 
-                 position="0 0 0"      
-                 rotation="0 0 0" 
+                 position="0 0 0.001"      rotation="0 0 0" 
                  material="side: double;"></a-image>
         
       </a-entity>
     </a-scene>
 
     <script>
-      const sceneEl = document.querySelector('a-scene');
+      const sceneEl = document.getElementById('arScene');
       const hudEl = document.getElementById('hud');
+      let mindarComponent = null;
 
-      // --- CRITICAL CAMERA FIX ---
+      // Wait for the A-Frame component to load before getting a reference to MindAR
+      sceneEl.addEventListener('loaded', () => {
+          mindarComponent = sceneEl.components['mindar-image'];
+          // Ensure autostart is false so the user tap is required
+          if (mindarComponent) {
+              mindarComponent.data.autostart = false; 
+              // Set a manual reference to the scene for safety
+              window.arScene = sceneEl; 
+          }
+      });
+      
+
+      // --- CRITICAL CAMERA RESTART FIX ---
       hudEl.addEventListener('click', () => {
-        if (sceneEl && sceneEl.components['mindar-image'] && !sceneEl.components['mindar-image'].data.autostart) {
-          sceneEl.components['mindar-image'].start();
-        }
-        hudEl.style.opacity = 0; 
-        setTimeout(() => hudEl.style.display = 'none', 500);
+          if (mindarComponent) {
+              console.log("Attempting to start MindAR.");
+              mindarComponent.start();
+          } else {
+              console.error("MindAR component not yet initialized!");
+          }
+          
+          // Fade out the HUD immediately after the tap
+          hudEl.style.opacity = 0; 
+          setTimeout(() => hudEl.style.display = 'none', 500);
       }, { once: true }); 
 
       // --- Tracking Status Handlers ---
       const targetEl = document.querySelector('a-entity[mindar-image-target]');
-
       if (targetEl) {
           targetEl.addEventListener('targetLost', () => {
-              console.log('Target lost. Overlay disappeared.');
-          });
-          targetEl.addEventListener('targetFound', () => {
-              console.log('Target found. Overlay appearing.');
-              // This is where we know it's detected, but the overlay still might be invisible due to position/scale.
+              console.log('Target lost.');
+              // You can optionally show the HUD again here to prompt for a restart
           });
       }
     </script>
